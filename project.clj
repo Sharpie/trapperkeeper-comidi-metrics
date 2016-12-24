@@ -11,7 +11,8 @@
 
   :dependencies [[org.clojure/clojure]
                  [prismatic/schema]
-                 [puppetlabs/trapperkeeper-metrics]
+                 [ring/ring-core]
+                 [puppetlabs/trapperkeeper-metrics "0.5.1-SNAPSHOT"]
                  [puppetlabs/comidi]]
 
   :plugins [[lein-parent "0.3.1"]]

@@ -1,9 +1,15 @@
 ;; Utilities for tracking metrics on http requests.
 
 (ns puppetlabs.metrics.http
-  (:import (java.util.concurrent TimeUnit)
-           (com.codahale.metrics Timer Counter Histogram MetricRegistry))
+  (:import [java.util.concurrent TimeUnit]
+           [com.codahale.metrics Timer Counter Histogram MetricRegistry]
+           [io.opentracing Tracer]
+           [io.opentracing.propagation Format$Builtin TextMapExtractAdapter]
+           [io.opentracing.tag Tags])
   (:require [schema.core :as schema]
+            [clojure.tools.logging :as log]
+            [clojure.set :as setutils]
+            [ring.util.request :as requtils]
             [puppetlabs.comidi :as comidi]
             [puppetlabs.metrics :as metrics]))
 
@@ -155,6 +161,26 @@
         (finally
           (.dec active-counter)
           (.update active-histo (.getCount active-counter)))))))
+
+(defn trace-request
+  [tracer req]
+   (-> tracer
+       (.buildSpan (requtils/path-info req))
+       (.asChildOf (.extract tracer
+                             Format$Builtin/TEXT_MAP
+                             (TextMapExtractAdapter. (:headers req))))
+       (.withTag (.getKey Tags/SPAN_KIND) Tags/SPAN_KIND_SERVER)
+       .start))
+
+(defn wrap-with-request-tracing
+  "Ring middleware. Wraps the given ring handler with OpenTracing instrumentation."
+  [app tracer]
+  (fn [req]
+    (let [span (trace-request tracer req)]
+      (try
+        (app req)
+        (finally
+          (.finish span))))))
 
 (schema/defn ^:always-validate
   request-summary :- RequestSummary
