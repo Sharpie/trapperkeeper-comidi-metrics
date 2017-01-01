@@ -178,10 +178,11 @@
   "Ring middleware. Wraps the given ring handler with OpenTracing instrumentation."
   [app tracer]
   (fn [req]
-    (let [span (trace-request tracer req)]
+    (let [span (trace-request tracer req)
+          traced-req (assoc req :opentracing-span span)]
       (try
         (tracing/push-span span)
-        (app req)
+        (app traced-req)
         (finally
           (.finish span)
           (tracing/pop-span))))))
