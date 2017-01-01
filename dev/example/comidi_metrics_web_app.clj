@@ -66,9 +66,10 @@
           (handle-baz app-metrics baz bam))))))
 
 (defn build-handler
-  [routes http-metrics]
+  [routes http-metrics tracer]
   (-> (comidi/routes->handler routes)
     (http-metrics/wrap-with-request-metrics http-metrics)
+    (http-metrics/wrap-with-request-tracing tracer)
     (comidi/wrap-with-route-metadata routes)))
 
 (defn register-app-metrics
@@ -103,11 +104,12 @@
 
 (tk/defservice example-web-service
   [[:WebroutingService add-ring-handler get-route]
-   [:MetricsService get-metrics-registry]
+   [:MetricsService get-metrics-registry register-tracer]
    [:StatusService register-status]]
   (init [this context]
     (let [path (get-route this)
           metrics-registry (get-metrics-registry)
+          tracer (register-tracer "example-web-service")
           app-metrics (register-app-metrics metrics-registry)
           routes (example-routes path app-metrics)
           route-metadata (comidi/route-metadata routes)
@@ -115,7 +117,7 @@
                          metrics-registry
                          "localhost"
                          route-metadata)
-          handler (build-handler routes http-metrics)]
+          handler (build-handler routes http-metrics tracer)]
 
       (log/infof "Registering status callback for Example Web Service")
       (register-status

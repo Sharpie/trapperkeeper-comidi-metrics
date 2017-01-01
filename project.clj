@@ -13,6 +13,7 @@
                  [prismatic/schema]
                  [ring/ring-core]
                  [puppetlabs/trapperkeeper-metrics "0.5.1-SNAPSHOT"]
+                 [crypto-random "1.2.0"]
                  [puppetlabs/comidi]]
 
   :plugins [[lein-parent "0.3.1"]]

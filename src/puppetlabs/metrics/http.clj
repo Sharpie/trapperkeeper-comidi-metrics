@@ -11,7 +11,9 @@
             [clojure.set :as setutils]
             [ring.util.request :as requtils]
             [puppetlabs.comidi :as comidi]
-            [puppetlabs.metrics :as metrics]))
+            [puppetlabs.metrics :as metrics]
+            ;; FIXME: Span tracking should be built into the tracing lib.
+            [puppetlabs.trapperkeeper.services.metrics.tracing-core :as tracing]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Schemas
@@ -178,9 +180,11 @@
   (fn [req]
     (let [span (trace-request tracer req)]
       (try
+        (tracing/push-span span)
         (app req)
         (finally
-          (.finish span))))))
+          (.finish span)
+          (tracing/pop-span))))))
 
 (schema/defn ^:always-validate
   request-summary :- RequestSummary

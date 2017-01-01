@@ -27,7 +27,6 @@
     json/parse-string))
 
 (deftest test-example-web-service
-  (logutils/with-test-logging
     (with-app-with-config app
       (get-services-from-bootstrap)
       (assoc-in (get-config-from-file)
@@ -38,6 +37,7 @@
 
       (testing "example app endpoints are accessible"
         (let [resp (http-get "http://localhost:8080/example/v1/foo")]
+          (println (:body resp))
          (is (= 200 (:status resp)))))
       (testing "status endpoint is accessible"
         (let [resp (http-get "http://localhost:8080/status/v1/services")]
@@ -73,4 +73,4 @@
                 (is (<= 5 (get-in app-metrics ["baz-task1" "mean"]))))
               (if (= 0 (get-in app-metrics ["baz-task2" "count"]))
                 (is (= 0 (get-in app-metrics ["baz-task2" "mean"])))
-                (is (<= 20 (get-in app-metrics ["baz-task2" "mean"])))))))))))
+                (is (<= 20 (get-in app-metrics ["baz-task2" "mean"]))))))))))

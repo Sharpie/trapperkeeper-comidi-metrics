@@ -2,13 +2,20 @@
   (:require [puppetlabs.http.client.sync :as http-client]
             [puppetlabs.comidi :as comidi]
             [example.comidi-metrics-web-app :as example-app]
+            [crypto.random :as hexrandom]
             [clojure.string :as str]
             [cheshire.core :as json]
             [clojure.pprint :as pprint]))
 
+(def traceid
+  (hexrandom/hex 8))
+
 (defn http-get
   [uri]
-  (http-client/get uri {:as :text}))
+  (http-client/get uri {:as :text
+                        :headers {"X-B3-TraceID" traceid
+                                  "X-B3-SpanID" (hexrandom/hex 8)
+                                  "X-B3-Sampled" "1"}}))
 
 (defn random-string
   []
